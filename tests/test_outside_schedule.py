@@ -49,5 +49,33 @@ class TestSchedule(unittest.TestCase):
         self.assertEqual(move_date_by_days(d1, roll=-365), datetime.date(2019, 1, 31))
         self.assertEqual(move_date_by_days(d2, roll=-366), datetime.date(2019, 12, 31))
 
+    def test_move_date_by_month_following(self):
+        # checks if rolling forward ok
+        self.assertEqual(move_date_by_month_following(d1, roll=1), datetime.date(2020, 3, 2))
+        self.assertEqual(move_date_by_month_following(d1, roll=3), datetime.date(2020, 5, 4))
+        self.assertEqual(move_date_by_month_following(d1, roll=6), datetime.date(2020, 7, 31))
+        self.assertEqual(move_date_by_month_following(d1, roll=12), datetime.date(2021, 2, 1))
+        
+        #checks if rolling over holidays ok
+        self.assertEqual(move_date_by_month_following(datetime.date(2019, 11, 25), roll=1), datetime.date(2019, 12, 27))
+        
+        #checks if rolling over year end ok
+        self.assertEqual(move_date_by_month_following(d1, roll=24), datetime.date(2022, 1, 31))
+        self.assertEqual(move_date_by_month_following(d1, roll=25), datetime.date(2022, 3, 1))
+        
+        #checks if rolling backward ok
+        self.assertEqual(move_date_by_month_following(d1, roll=-25), datetime.date(2019, 12, 31))
+        #self.assertEqual(move_date_by_month_following(d1, roll=-3), datetime.date(2019, 10, 30))
+        
+        # #checks if rolling backward over weekends
+        # self.assertEqual(move_date_by_month(d1, roll=-62), datetime.date(2019, 11, 29))
+        
+        # #checks if rolling backward over year end ok
+        # self.assertEqual(move_date_by_month(d1, roll=-365), datetime.date(2019, 1, 31))
+        # self.assertEqual(move_date_by_month(d2, roll=-366), datetime.date(2019, 12, 31))
+
+
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -85,8 +85,17 @@ d = datetime.date(2020, 1, 31)
 h1 = datetime.date(2020, 2, 3)
 h2 = datetime.date(2021, 3, 1)
 h3 = datetime.date(2020, 2, 28)
+d
+
 
 def move_date_by_days(init_date, roll=1, nwd_key='pln', hol_key='pln'):
+    '''
+    moves date by n-number of working days forward or backward
+    init_date: date, initial caluclation date
+    roll: integer, number of days to move forward (+) or backward (-)
+    nwd: string that stands for currency iso code, it is a key in non_working_days dictonary
+    hol_key: string that stands for currency iso code, it is a key on holidays dictonary
+    '''
     nwd = non_working_days.get(nwd_key, [])
     hol = holidays.get(hol_key,[])
     moved_date = init_date + datetime.timedelta(days=roll)
@@ -96,22 +105,27 @@ def move_date_by_days(init_date, roll=1, nwd_key='pln', hol_key='pln'):
         else:
             moved_date=move_date_by_days(init_date + datetime.timedelta(days=-1), roll=roll, nwd_key=nwd_key, hol_key=hol_key)
     return moved_date
+
 #test        
 #move_date_by_days(d, 1)
 
 def move_date_by_month_following(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):
     n_month = (init_date.month + roll) % 12
     if n_month==0: n_month=12
-    n_year = (init_date.month + roll)
-    n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)
+    n_year = (init_date.month + roll)    
+    if roll >= 0:
+        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+    else:
+        n_year = (((init_date.month + roll) // 12) -1) if n_year == 0 else (roll // 12) 
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
         moved_date=move_date_by_month_following(init_date + datetime.timedelta(days=1), roll)
     moved_date=move_date_by_days(moved_date + datetime.timedelta(days=-1), roll=1, nwd_key=nwd_key, hol_key=hol_key) 
     return moved_date
+
 #test
-#move_date_by_month_following(d, 12)
+#move_date_by_month_following(d, -25)
 
 def move_date_by_month_preceding(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):   
     n_month = (init_date.month + roll) % 12
@@ -125,7 +139,6 @@ def move_date_by_month_preceding(init_date, roll=1, nwd_key='pln', hol_key='pln'
     moved_date=move_date_by_days(moved_date + datetime.timedelta(days=1), roll=-1, nwd_key=nwd_key, hol_key=hol_key) 
     return moved_date
 
-d = datetime.date(2020, 3, 31)
 #test
 #move_date_by_month_following(d, 1)
 #move_date_by_month_preceding(d, 1)
