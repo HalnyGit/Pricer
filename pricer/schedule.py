@@ -105,7 +105,6 @@ def is_weom(init_date, nwd_key=None, hol_key=None):
     '''
     y = init_date.year
     m = init_date.month
-    d = init_date.day
     first, last = calendar.monthrange(y, m)
     temp_date = datetime.date(y, m, last) + datetime.timedelta(days=1)
     work_eom = move_date_by_days(temp_date, roll=-1, nwd_key=nwd_key, hol_key=hol_key)
