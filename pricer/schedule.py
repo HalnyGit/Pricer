@@ -7,6 +7,7 @@ Created on Wed Nov 13 11:25:59 2019
 import numpy as np
 import pandas as pd
 import datetime
+import calendar
 import os
 
 #some test lines
@@ -85,16 +86,41 @@ d = datetime.date(2020, 1, 31)
 h1 = datetime.date(2020, 2, 3)
 h2 = datetime.date(2021, 3, 1)
 h3 = datetime.date(2020, 2, 28)
-d
 
+def is_eom(init_date):
+    '''
+    init_date: date
+    return: boolean, True if init_date is the last day of month
+    '''
+    y = init_date.year
+    m = init_date.month
+    d = init_date.day
+    first, last = calendar.monthrange(y, m)
+    return d == last
+
+def is_weom(init_date, nwd_key=None, hol_key=None):
+    '''
+    init_date: date
+    return: boolean, True if init_date is last working day of month
+    '''
+    y = init_date.year
+    m = init_date.month
+    d = init_date.day
+    first, last = calendar.monthrange(y, m)
+    temp_date = datetime.date(y, m, last) + datetime.timedelta(days=1)
+    work_eom = move_date_by_days(temp_date, roll=-1, nwd_key=nwd_key, hol_key=hol_key)
+    return init_date == work_eom
+    
+#test
+#is_weom(h3, nwd_key='pln')
 
 def move_date_by_days(init_date, roll=1, nwd_key='pln', hol_key='pln'):
     '''
     moves date by n-number of working days forward or backward
     init_date: date, initial caluclation date
     roll: integer, number of days to move forward (+) or backward (-)
-    nwd: string that stands for currency iso code, it is a key in non_working_days dictonary
-    hol_key: string that stands for currency iso code, it is a key on holidays dictonary
+    nwd: string that stands for currency iso code, it is a key in non_working_days dictionary
+    hol_key: string that stands for currency iso code, it is a key in holidays dictonary
     '''
     nwd = non_working_days.get(nwd_key, [])
     hol = holidays.get(hol_key,[])
@@ -130,8 +156,11 @@ def move_date_by_month_following(init_date, roll=1, nwd_key='pln', hol_key='pln'
 def move_date_by_month_preceding(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):   
     n_month = (init_date.month + roll) % 12
     if n_month==0: n_month=12
-    n_year = (init_date.month + roll)
-    n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+    n_year = (init_date.month + roll)    
+    if roll >= 0:
+        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+    else:
+        n_year = -1 if n_year == 0 else (roll // 12)   
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
@@ -140,8 +169,24 @@ def move_date_by_month_preceding(init_date, roll=1, nwd_key='pln', hol_key='pln'
     return moved_date
 
 #test
-#move_date_by_month_following(d, 1)
-#move_date_by_month_preceding(d, 1)
+#move_date_by_month_preceding(datetime.date(2020, 2, 29), 1)
+    
+def move_date_by_month_following_eom(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):
+    n_month = (init_date.month + roll) % 12
+    if n_month==0: n_month=12
+    n_year = (init_date.month + roll)    
+    if roll >= 0:
+        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+    else:
+        n_year = -1 if n_year == 0 else (roll // 12) 
+    try:
+        moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
+    except:
+        moved_date=move_date_by_month_following(init_date + datetime.timedelta(days=1), roll)
+    moved_date=move_date_by_days(moved_date + datetime.timedelta(days=-1), roll=1, nwd_key=nwd_key, hol_key=hol_key) 
+    return moved_date    
+
+
 
 def move_date_by_month_modfoll(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):
     preceding_date = move_date_by_month_preceding(init_date, roll=roll, nwd_key=nwd_key, hol_key=hol_key)
@@ -153,7 +198,8 @@ def move_date_by_month_modfoll(init_date, roll=1, nwd_key='pln', hol_key='pln', 
 #test
 #move_date_by_month_modfoll(d, 1)
 
-# exampple of getattr
+# not connected to the core of this script
+# some exampple of using getattr
 class Switcher(object):
     def indirect(self,i):
         method_name='number_'+str(i)
