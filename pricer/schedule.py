@@ -116,7 +116,7 @@ def move_date_by_month_following(init_date, roll=1, nwd_key='pln', hol_key='pln'
     if roll >= 0:
         n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
     else:
-        n_year = (((init_date.month + roll) // 12) -1) if n_year == 0 else (roll // 12) 
+        n_year = -1 if n_year == 0 else (roll // 12) 
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
@@ -124,8 +124,8 @@ def move_date_by_month_following(init_date, roll=1, nwd_key='pln', hol_key='pln'
     moved_date=move_date_by_days(moved_date + datetime.timedelta(days=-1), roll=1, nwd_key=nwd_key, hol_key=hol_key) 
     return moved_date
 
-#test
-#move_date_by_month_following(d, -25)
+#test   
+#move_date_by_month_following(d, -13)
 
 def move_date_by_month_preceding(init_date, roll=1, nwd_key='pln', hol_key='pln', conv=None):   
     n_month = (init_date.month + roll) % 12
