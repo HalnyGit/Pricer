@@ -27,7 +27,7 @@ class TestSchedule(unittest.TestCase):
     
     def test_move_date_by_days(self):
         # checks if rolling forward ok
-        self.assertEqual(move_date_by_days(d1, roll=1), datetime.date(2020, 2, 3))
+        self.assertEqual(move_date_by_days(d1, 1, 'pln', 'pln'), datetime.date(2020, 2, 3))
         self.assertEqual(move_date_by_days(d1, roll=8), datetime.date(2020, 2, 10))
         self.assertEqual(move_date_by_days(d1, roll=31), datetime.date(2020, 3, 2))
         
