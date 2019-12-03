@@ -119,7 +119,7 @@ def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None):
 #test        
 #move_date_by_days(d, 1, 'pln', 'pln')
     
-def move_date_by_month_calendar(init_date, roll=1, conv=None):
+def mdbm_calendar(init_date, roll=1, conv=None):
     '''
     moves date by n-number of months forward or backward
     init_date: date, initial caluclation date
@@ -138,14 +138,14 @@ def move_date_by_month_calendar(init_date, roll=1, conv=None):
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
-        moved_date=move_date_by_month_preceding(init_date + datetime.timedelta(days=-1), roll=roll)
+        moved_date=mdbm_preceding(init_date + datetime.timedelta(days=-1), roll=roll)
     
     return moved_date
 
 #test
-#move_date_by_month_calendar(h3, -10)
+#mdbm_calendar(datetime.date(2019, 3, 31), -1)
 
-def move_date_by_month_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
     '''
     moves date by n-number of months forward or backward, if moved date is weekend or holiday
     it is moved to next working day
@@ -166,15 +166,15 @@ def move_date_by_month_following(init_date, roll=1, nwd_key=None, hol_key=None, 
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
-        moved_date=move_date_by_month_following(init_date + datetime.timedelta(days=1), roll)
+        moved_date=mdbm_following(init_date + datetime.timedelta(days=1), roll)
     moved_date=move_date_by_days(moved_date + datetime.timedelta(days=-1), roll=1, nwd_key=nwd_key, hol_key=hol_key) 
     return moved_date
 
 #test   
-#move_date_by_month_following(datetime.date(2020, 3, 31), -1, 'pln', 'pln')
+#mdbm_following(datetime.date(2020, 3, 31), -1, 'pln', 'pln')
 
 
-def move_date_by_month_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
     '''
     moves date by n-number of months forward or backward, if moved date is weekend or holiday
     it is moved to preceding working day
@@ -194,14 +194,14 @@ def move_date_by_month_preceding(init_date, roll=1, nwd_key=None, hol_key=None, 
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
     except:
-        moved_date=move_date_by_month_preceding(init_date + datetime.timedelta(days=-1), roll)
+        moved_date=mdbm_preceding(init_date + datetime.timedelta(days=-1), roll)
     moved_date=move_date_by_days(moved_date + datetime.timedelta(days=1), roll=-1, nwd_key=nwd_key, hol_key=hol_key) 
     return moved_date
 
 #test
-#move_date_by_month_preceding(datetime.date(2020, 2, 29), -1, 'pln', 'pln')
+#mdbm_preceding(datetime.date(2020, 2, 29), -1, 'pln', 'pln')
     
-def move_date_by_month_modified_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
     n_month = (init_date.month + roll) % 12
     if n_month==0: n_month=12
     n_year = (init_date.month + roll)    
@@ -211,20 +211,29 @@ def move_date_by_month_modified_following(init_date, roll=1, nwd_key=None, hol_k
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12)   
     try:
         moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
+        md_pre=move_date_by_days(moved_date, -1, nwd_key, hol_key)
+        md_fol=move_date_by_days(moved_date, 1, nwd_key, hol_key)
     except:
-        moved_date=move_date_by_month_preceding(init_date + datetime.timedelta(days=-1), roll)
-    moved_date=move_date_by_days(moved_date + datetime.timedelta(days=1), roll=-1, nwd_key=nwd_key, hol_key=hol_key)
-    return get_weom(moved_date, nwd_key=nwd_key, hol_key=hol_key)
+        md_pre=mdbm_preceding(init_date + datetime.timedelta(days=-1), roll, nwd_key, hol_key)
+        md_fol=mdbm_following(init_date + datetime.timedelta(days=1), roll, nwd_key, hol_key)
+    if get_weom(md_pre, nwd_key, hol_key) < md_fol:
+        moved_date = md_pre
+    else:
+        moved_date = md_fol
+    if is_weom(init_date): moved_date=get_weom(moved_date, nwd_key, hol_key)
+    return moved_date
 
 #test
-#move_date_by_month_modified_following(d, 1, 'pln', 'pln')
+#mdbm_modified_following(datetime.date(2019, 12, 6), 1, 'pln', 'pln')
+#mdbm_modified_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
+#mdbm_modified_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')
 
-def move_date_by_month_end_end(init_date, roll=1, conv=None):
-    moved_date = move_date_by_month_preceding(init_date, roll=roll)
+def mdbm_end_end(init_date, roll=1, conv=None):
+    moved_date = mdbm_preceding(init_date, roll=roll)
     return get_eom(moved_date)
 
 #test
-#move_date_by_month_end_end(h3, 12)
+#mdbm_end_end(h3, 12)
 
 def calc_period(calc_date, ccy='', period='', hol=None):
     '''calc_date: date, calculation date
