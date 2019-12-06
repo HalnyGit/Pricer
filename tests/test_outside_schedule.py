@@ -12,18 +12,12 @@ sys.path.append('..\\pricer\\')
 
 from schedule import *
 
-#import schedule
-#from pricer import schedule
-
 d1 = datetime.date(2020, 1, 31)
 d2 = datetime.date(2021, 1, 1)
 d3 = datetime.date(2021, 3, 1)
 d4 = datetime.date(2020, 2, 28)
 d5 = datetime.date(2020, 2, 29)
 d6 = datetime.date(2023, 1, 31)
-
-
-#move_date_by_days(init_date, roll=1, nwd_key='pln', hol_key='pln')
 
 class TestSchedule(unittest.TestCase):
     
@@ -35,6 +29,8 @@ class TestSchedule(unittest.TestCase):
         
         #checks if rolling over holidays ok
         self.assertEqual(move_date_by_days(d1, 73, 'pln', 'pln'), datetime.date(2020, 4, 14))
+        self.assertEqual(move_date_by_days(d2, 5, 'pln', 'pln'), datetime.date(2021, 1, 7))
+        self.assertEqual(move_date_by_days(d2, 5, 'usd', 'usd'), datetime.date(2021, 1, 6))
         
         #checks if rolling over year end ok
         self.assertEqual(move_date_by_days(d1, 365, 'pln', 'pln'), datetime.date(2021, 2, 1))
@@ -152,6 +148,54 @@ class TestSchedule(unittest.TestCase):
         self.assertEqual(mdbm_modified_following(d6, -13, 'pln', 'pln'), datetime.date(2021, 12, 31))
         self.assertEqual(mdbm_modified_following(d6, -24, 'pln', 'pln'), datetime.date(2021, 1, 29))
         self.assertEqual(mdbm_modified_following(d6, -25, 'pln', 'pln'), datetime.date(2020, 12, 31))
+
+    def test_mdbm_eom(self):
+        # checks if rolling forward ok
+        self.assertEqual(mdbm_eom(datetime.date(2019, 12, 6), 1),datetime.date(2020, 1, 31))
+        self.assertEqual(mdbm_eom(datetime.date(2020, 1, 31), 1),datetime.date(2020, 2, 29))
+        self.assertEqual(mdbm_eom(datetime.date(2020, 2, 29), 1),datetime.date(2020, 3, 31))
+        self.assertEqual(mdbm_eom(d1, 1), datetime.date(2020, 2, 29))
+        self.assertEqual(mdbm_eom(d1, 3), datetime.date(2020, 4, 30))
+        self.assertEqual(mdbm_eom(d1, 6), datetime.date(2020, 7, 31))
+        self.assertEqual(mdbm_eom(d1, 11), datetime.date(2020, 12, 31))
+        self.assertEqual(mdbm_eom(d1, 12), datetime.date(2021, 1, 31))
+        self.assertEqual(mdbm_eom(d1, 13), datetime.date(2021, 2, 28))
+        self.assertEqual(mdbm_eom(d1, 24), datetime.date(2022, 1, 31))
+        self.assertEqual(mdbm_eom(d1, 25), datetime.date(2022, 2, 28))
+
+        #checks if rolling backward ok
+        self.assertEqual(mdbm_eom(d6, -1), datetime.date(2022, 12, 31))
+        self.assertEqual(mdbm_eom(d6, -3), datetime.date(2022, 10, 31))
+        self.assertEqual(mdbm_eom(d6, -6), datetime.date(2022, 7, 31))
+        self.assertEqual(mdbm_eom(d6, -11), datetime.date(2022, 2, 28))
+        self.assertEqual(mdbm_eom(d6, -12), datetime.date(2022, 1, 31))
+        self.assertEqual(mdbm_eom(d6, -13), datetime.date(2021, 12, 31))
+        self.assertEqual(mdbm_eom(d6, -24), datetime.date(2021, 1, 31))
+        self.assertEqual(mdbm_eom(d6, -25), datetime.date(2020, 12, 31))
+
+    def test_mdbm_eom_following(self):
+        # checks if rolling forward ok
+        self.assertEqual(mdbm_eom_following(datetime.date(2019, 12, 6), 1,  'pln', 'pln'),datetime.date(2020, 1, 31))
+        self.assertEqual(mdbm_eom_following(datetime.date(2020, 1, 31), 1,  'pln', 'pln'),datetime.date(2020, 3, 2))
+        self.assertEqual(mdbm_eom_following(datetime.date(2020, 2, 29), 1,  'pln', 'pln'),datetime.date(2020, 3, 31))
+        self.assertEqual(mdbm_eom_following(d1, 1, 'pln', 'pln'), datetime.date(2020, 3, 2))
+        self.assertEqual(mdbm_eom_following(d1, 3, 'pln', 'pln'), datetime.date(2020, 4, 30))
+        self.assertEqual(mdbm_eom_following(d1, 6, 'pln', 'pln'), datetime.date(2020, 7, 31))
+        self.assertEqual(mdbm_eom_following(d1, 11, 'pln', 'pln'), datetime.date(2020, 12, 31))
+        self.assertEqual(mdbm_eom_following(d1, 12, 'pln', 'pln'), datetime.date(2021, 2, 1))
+        self.assertEqual(mdbm_eom_following(d1, 13, 'pln', 'pln'), datetime.date(2021, 3, 1))
+        self.assertEqual(mdbm_eom_following(d1, 24, 'pln', 'pln'), datetime.date(2022, 1, 31))
+        self.assertEqual(mdbm_eom_following(d1, 25, 'pln', 'pln'), datetime.date(2022, 2, 28))
+
+        #checks if rolling backward ok
+        self.assertEqual(mdbm_eom_following(d6, -1, 'pln', 'pln'), datetime.date(2023, 1, 2))
+        self.assertEqual(mdbm_eom_following(d6, -3, 'pln', 'pln'), datetime.date(2022, 10, 31))
+        self.assertEqual(mdbm_eom_following(d6, -6, 'pln', 'pln'), datetime.date(2022, 8, 1))
+        self.assertEqual(mdbm_eom_following(d6, -11, 'pln', 'pln'), datetime.date(2022, 2, 28))
+        self.assertEqual(mdbm_eom_following(d6, -12, 'pln', 'pln'), datetime.date(2022, 1, 31))
+        self.assertEqual(mdbm_eom_following(d6, -13, 'pln', 'pln'), datetime.date(2021, 12, 31))
+        self.assertEqual(mdbm_eom_following(d6, -24, 'pln', 'pln'), datetime.date(2021, 2, 1))
+        self.assertEqual(mdbm_eom_following(d6, -25, 'pln', 'pln'), datetime.date(2020, 12, 31))
 
 if __name__ == '__main__':
     unittest.main()

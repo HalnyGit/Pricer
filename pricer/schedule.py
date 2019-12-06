@@ -9,11 +9,6 @@ import pandas as pd
 import datetime
 import os
 
-#some test lines
-print(os.getcwd())
-os.listdir('..\\data')
-
-
 #reading holidays from csv files and making dictionary of holidays{ccy:[dates]}
 holiday_paths = [os.path.join('..\\holidays', file) for file in os.listdir('..\\holidays') if file.endswith('.csv')]
 
@@ -57,7 +52,7 @@ h3 = datetime.date(2020, 11, 28)
 def get_eom(init_date):
     '''
     init_date: date
-    return: date, last calendar day of month of init_date
+    return: date, last day of month of init_date
     '''
     temp_date = init_date.replace(day=28) + datetime.timedelta(days=4)
     return temp_date - datetime.timedelta(days=temp_date.day)
@@ -118,7 +113,8 @@ def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None):
 
 #test        
 #move_date_by_days(d, 1, 'pln', 'pln')
-    
+#move_date_by_days(datetime.date(2020, 1, 6), -1, 'pln', 'pln')   
+
 def mdbm_calendar(init_date, roll=1, conv=None):
     '''
     moves date by n-number of months forward or backward
@@ -153,7 +149,8 @@ def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
     roll: integer, number of months the init_date will be rolled forward (+) or backward(-)
     nwd_key: string that stands for currency iso code, it is a key in non_working_days dictionary
     hol_key: string that stands for currency iso code, it is a key in holidays dictonary
-    function does not obey end-end rule: 31/01 + 1 month => 01/03 as there is no 31/02
+    the function does not comply end-end rule: 31/01 + 1 month => 01/03 as there is no 31/02
+    return: date
     '''
     n_month = (init_date.month + roll) % 12
     if n_month==0: n_month=12
@@ -182,7 +179,8 @@ def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
     roll: integer, number of months the init_date will be rolled forward (+) or backward(-)
     nwd_key: string that stands for currency iso code, it is a key in non_working_days dictionary
     hol_key: string that stands for currency iso code, it is a key in holidays dictonary
-    function does not obey end-end rule: 29/02 + 1 month => 29/03, not 31/03
+    the function does not comply end-end rule: 29/02 + 1 month => 29/03, not 31/03
+    return: date
     '''
     n_month = (init_date.month + roll) % 12
     if n_month==0: n_month=12
@@ -200,40 +198,75 @@ def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
 
 #test
 #mdbm_preceding(datetime.date(2020, 2, 29), -1, 'pln', 'pln')
+
+def mdbm_eom(init_date, roll=1, conv=None):
+    '''
+    moves date by n-number of months forward or backward to the end of the new month irrespectively of working days 
+    init_date: date
+    roll: integer, number of months the init_date will be rolled forward (+) or backward(-)
+    the function complies end-end rule: 29/02 + 1 month => 31/03
+    return: date
+    '''
+    moved_date = mdbm_preceding(init_date, roll)
+    return get_eom(moved_date)
+
+#test
+#mdbm_end_end(h3, 12)
     
+def mdbm_eom_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):    
+    '''
+    moves date by n-number of months forward or backward to the end of the new month taking into account working days
+    init_date: date
+    roll: integer, number of months the init_date will be rolled forward (+) or backward(-)
+    the function complies end-end rule: 29/02 + 1 month => 31/03
+    return: date
+    '''
+    moved_date = mdbm_eom(init_date, roll)
+    return move_date_by_days(moved_date, 0, nwd_key, hol_key)
+
+#test
+#mdbm_eom_following(datetime.date(2019, 12, 6), 1, 'usd', 'usd')
+#mdbm_eom_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
+#mdbm_eom_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')  
+   
 def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+    '''
+    moves date by n-number of months forward or backward, if moved date is weekend or holiday
+    it is moved according to modified following convention
+    init_date: date
+    roll: integer, number of months the init_date will be rolled forward (+) or backward(-)
+    nwd_key: string that stands for currency iso code, it is a key in non_working_days dictionary
+    hol_key: string that stands for currency iso code, it is a key in holidays dictonary
+    the function complies end-end rule: 29/02 + 1 month => 31/03
+    '''
+    if is_weom(init_date):
+        moved_date = mdbm_preceding(init_date, roll, nwd_key, hol_key)
+        return get_weom(moved_date, nwd_key, hol_key)
+    
     n_month = (init_date.month + roll) % 12
-    if n_month==0: n_month=12
+    if n_month == 0: n_month = 12
     n_year = (init_date.month + roll)    
     if roll >= 0:
         n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
     else:
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12)   
     try:
-        moved_date=datetime.date(init_date.year + n_year, n_month, init_date.day)
-        md_pre=move_date_by_days(moved_date, -1, nwd_key, hol_key)
-        md_fol=move_date_by_days(moved_date, 1, nwd_key, hol_key)
+        moved_date = datetime.date(init_date.year + n_year, n_month, init_date.day)
+        md_pre = move_date_by_days(moved_date + datetime.timedelta(days=1), -1, nwd_key, hol_key)
+        md_fol = move_date_by_days(moved_date, 0, nwd_key, hol_key)
     except:
-        md_pre=mdbm_preceding(init_date + datetime.timedelta(days=-1), roll, nwd_key, hol_key)
-        md_fol=mdbm_following(init_date + datetime.timedelta(days=1), roll, nwd_key, hol_key)
-    if get_weom(md_pre, nwd_key, hol_key) < md_fol:
+        md_pre = mdbm_preceding(init_date + datetime.timedelta(days=-1), roll, nwd_key, hol_key)
+        md_fol = mdbm_following(init_date + datetime.timedelta(days=1), roll, nwd_key, hol_key)
+    if md_fol.month != md_pre.month:
         moved_date = md_pre
     else:
-        moved_date = md_fol
-    if is_weom(init_date): moved_date=get_weom(moved_date, nwd_key, hol_key)
+        moved_date = md_fol    
     return moved_date
 
 #test
-#mdbm_modified_following(datetime.date(2019, 12, 6), 1, 'pln', 'pln')
+#mdbm_modified_following(datetime.date(2019, 12, 6), 1, 'usd', 'usd')
 #mdbm_modified_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
 #mdbm_modified_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')
-
-def mdbm_end_end(init_date, roll=1, conv=None):
-    moved_date = mdbm_preceding(init_date, roll=roll)
-    return get_eom(moved_date)
-
-#test
-#mdbm_end_end(h3, 12)
 
 def calc_period(calc_date, ccy='', period='', hol=None):
     '''calc_date: date, calculation date
@@ -269,7 +302,15 @@ def calc_period(calc_date, ccy='', period='', hol=None):
     
     return(start_date, end_date)
 
-
+class Schedule(object):
+    
+    def __init__(self, start, end, ccy, roll, convention, stub=None):
+        self.start = start
+        self.end = end
+        self.stub = stub
+        self.ccy = ccy
+        self.roll = roll
+        self.convention = convention
 
 
 # not connected to the rest of this script
