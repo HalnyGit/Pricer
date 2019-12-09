@@ -115,7 +115,7 @@ def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None):
 #move_date_by_days(d, 1, 'pln', 'pln')
 #move_date_by_days(datetime.date(2020, 1, 6), -1, 'pln', 'pln')   
 
-def mdbm_calendar(init_date, roll=1, conv=None):
+def mdbm_calendar(init_date, roll=1):
     '''
     moves date by n-number of months forward or backward
     init_date: date, initial caluclation date
@@ -141,7 +141,7 @@ def mdbm_calendar(init_date, roll=1, conv=None):
 #test
 #mdbm_calendar(datetime.date(2019, 3, 31), -1)
 
-def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None):
     '''
     moves date by n-number of months forward or backward, if moved date is weekend or holiday
     it is moved to next working day
@@ -171,7 +171,7 @@ def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
 #mdbm_following(datetime.date(2020, 3, 31), -1, 'pln', 'pln')
 
 
-def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None):
     '''
     moves date by n-number of months forward or backward, if moved date is weekend or holiday
     it is moved to preceding working day
@@ -199,7 +199,7 @@ def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
 #test
 #mdbm_preceding(datetime.date(2020, 2, 29), -1, 'pln', 'pln')
 
-def mdbm_eom(init_date, roll=1, conv=None):
+def mdbm_eom(init_date, roll=1):
     '''
     moves date by n-number of months forward or backward to the end of the new month irrespectively of working days 
     init_date: date
@@ -213,7 +213,7 @@ def mdbm_eom(init_date, roll=1, conv=None):
 #test
 #mdbm_end_end(h3, 12)
     
-def mdbm_eom_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):    
+def mdbm_eom_following(init_date, roll=1, nwd_key=None, hol_key=None):    
     '''
     moves date by n-number of months forward or backward to the end of the new month taking into account working days
     init_date: date
@@ -229,7 +229,7 @@ def mdbm_eom_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None)
 #mdbm_eom_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
 #mdbm_eom_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')  
    
-def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None, conv=None):
+def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None):
     '''
     moves date by n-number of months forward or backward, if moved date is weekend or holiday
     it is moved according to modified following convention
@@ -302,15 +302,37 @@ def calc_period(calc_date, ccy='', period='', hol=None):
     
     return(start_date, end_date)
 
+
+
 class Schedule(object):
-    
-    def __init__(self, start, end, ccy, roll, convention, stub=None):
+    CONVENTIONS = {'calendar', 'following', 'preceding', 'eom', 'eom_following', 
+                       'modified_following'}
+    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None):
         self.start = start
         self.end = end
         self.stub = stub
         self.ccy = ccy
         self.roll = roll
         self.convention = convention
+        if convention not in self.CONVENTIONS:
+            raise ValueError ('convention \"{0}\" is not valid, available conventions are: {1}'.format(convention, self.CONVENTIONS))
+        
+        
+        i = 1
+        if convention == 'calendar':
+            dates = []
+            dates.append(self.start)
+            while dates[-1] < self.end:
+                next_date = mdbm_calendar(self.start, self.roll * i)
+                if next_date < self.end:
+                    dates.append(next_date)
+                else:
+                    dates.append(self.end)        
+                i += 1
+        self.xxx = dates
+
+            
+
 
 
 # not connected to the rest of this script
@@ -327,7 +349,8 @@ class Switcher(object):
     def number_2(self):
         return 'two'
 
-s=Switcher()
-s.indirect(2)
+#test
+#s=Switcher()
+#s.indirect(2)
 
 
