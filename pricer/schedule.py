@@ -44,6 +44,7 @@ dse={'pln':{'on':(0, 1),
          'y':(2,)}
 }
 
+#some dates for testing purpose only
 d = datetime.date(2020, 1, 31)
 h1 = datetime.date(2020, 2, 3)
 h2 = datetime.date(2021, 3, 1)
@@ -314,22 +315,53 @@ class Schedule(object):
         self.ccy = ccy
         self.roll = roll
         self.convention = convention
-        if convention not in self.CONVENTIONS:
-            raise ValueError ('convention \"{0}\" is not valid, available conventions are: {1}'.format(convention, self.CONVENTIONS))
-        
-        
+        if self.convention not in self.CONVENTIONS:
+            raise ValueError ('\"{0}\" is not valid convention, available conventions are: {1}'.format(self.convention, self.CONVENTIONS))
+    
         i = 1
-        if convention == 'calendar':
-            dates = []
-            dates.append(self.start)
-            while dates[-1] < self.end:
-                next_date = mdbm_calendar(self.start, self.roll * i)
-                if next_date < self.end:
-                    dates.append(next_date)
-                else:
-                    dates.append(self.end)        
-                i += 1
-        self.xxx = dates
+        dates = [self.start]
+        if self.stub != None:
+            dates.append(self.stub)
+            roll_date = self.stub
+        else:
+            roll_date = self.start
+        while dates[-1] < self.end:
+            if self.convention == 'calendar':
+                next_date = mdbm_calendar(roll_date, self.roll * i)
+            if self.convention == 'following':
+                next_date = mdbm_following(roll_date, self.roll * i, self.ccy, self.ccy)
+            if self.convention == 'preceding':
+                next_date = mdbm_preceding(roll_date, self.roll * i, self.ccy, self.ccy)
+            if self.convention == 'eom':
+                next_date = mdbm_eom(roll_date, self.roll * i)
+            if self.convention == 'eom_following':
+                next_date = mdbm_eom_following(roll_date, self.roll * i, self.ccy, self.ccy)
+            if self.convention == 'modified_following':
+                next_date = mdbm_modified_following(roll_date, self.roll * i, self.ccy, self.ccy)
+            if next_date < self.end:
+                dates.append(next_date)
+            else:
+                dates.append(self.end)        
+            i += 1
+        
+        self.dates = dates
+        self.start_dates = self.dates[:-1]
+        self.end_dates = self.dates[1:]
+    
+    def get_dates(self):
+        return self.dates
+    
+    def get_start_dates(self):
+        return self.start_dates
+    
+    def get_end_dates(self):
+        return self.end_dates
+
+        
+        
+    
+     
+
 
             
 
