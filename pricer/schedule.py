@@ -354,7 +354,7 @@ class Schedule(object):
                      'end_date':self.end_dates}
         self.dates_table = pd.DataFrame(temp_data)
         
-        #self.dates_table['fixing'] = move_date_by_days(self.dates_table['start_date'], -1, self.ccy, self.ccy)
+        self.dates_table['fixing_2'] = self.dates_table['start_date'].apply(lambda x: move_date_by_days(x, -2, self.ccy, self.ccy))
         
         
         
