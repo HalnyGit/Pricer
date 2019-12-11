@@ -347,7 +347,18 @@ class Schedule(object):
         self.dates = dates
         self.start_dates = self.dates[:-1]
         self.end_dates = self.dates[1:]
-    
+        days_to_spot = dse[self.ccy]['sn'][0]
+        self.fixing_dates = [move_date_by_days(d, -days_to_spot, self.ccy, self.ccy ) for d in self.start_dates]
+        temp_data = {'fixing_date':self.fixing_dates,
+                     'start_date':self.start_dates,
+                     'end_date':self.end_dates}
+        self.dates_table = pd.DataFrame(temp_data)
+        
+        #self.dates_table['fixing'] = move_date_by_days(self.dates_table['start_date'], -1, self.ccy, self.ccy)
+        
+        
+        
+         
     def get_dates(self):
         return self.dates
     
