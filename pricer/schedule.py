@@ -308,12 +308,25 @@ def calc_period(calc_date, ccy='', period='', hol=None):
 class Schedule(object):
     CONVENTIONS = {'calendar', 'following', 'preceding', 'eom', 'eom_following', 
                        'modified_following'}
-    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None):
+    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None, pay_shift=None):
+        '''
+        start: date
+        end: date
+        ccy: string, iso currency code (eg 'usd', 'eur')
+        roll: integer, number of month the interest periods will roll
+        convention: string, one of the values from CONVENTIONS set
+        stub: date
+        pay_shift: tuple (integer, string), integer specifies number of days the payment date needs to be shifted +/- from start or end date
+                          string: 'start_date' or 'end_date' represents the date from which payment date shall be deduced
+                          if pay_shift=None then payment date equals end date
+        self.dates_table: is DataFrame that consist of interest periods meaning, start dates, end dates, fixing dates and payment dates                
+        '''
         self.start = start
         self.end = end
-        self.stub = stub
         self.ccy = ccy
         self.roll = roll
+        self.stub = stub
+        self.pay_shift = pay_shift
         self.convention = convention
         if self.convention not in self.CONVENTIONS:
             raise ValueError ('\"{0}\" is not valid convention, available conventions are: {1}'.format(self.convention, self.CONVENTIONS))
@@ -348,16 +361,15 @@ class Schedule(object):
         self.start_dates = self.dates[:-1]
         self.end_dates = self.dates[1:]
         days_to_spot = dse[self.ccy]['sn'][0]
-        self.fixing_dates = [move_date_by_days(d, -days_to_spot, self.ccy, self.ccy ) for d in self.start_dates]
-        temp_data = {'fixing_date':self.fixing_dates,
-                     'start_date':self.start_dates,
+        #self.fixing_dates = [move_date_by_days(d, -days_to_spot, self.ccy, self.ccy ) for d in self.start_dates]
+        temp_data = {'start_date':self.start_dates,
                      'end_date':self.end_dates}
         self.dates_table = pd.DataFrame(temp_data)
-        
-        self.dates_table['fixing_2'] = self.dates_table['start_date'].apply(lambda x: move_date_by_days(x, -2, self.ccy, self.ccy))
-        
-        
-        
+        self.dates_table['fixing_date'] = self.dates_table['start_date'].apply(lambda x: move_date_by_days(x, -days_to_spot, self.ccy, self.ccy))
+        if self.pay_shift == None:
+            self.dates_table['payment_date'] = self.dates_table['end_date']
+        else:
+            self.dates_table['payment_date'] = self.dates_table[self.pay_shift[0]].apply(lambda x: move_date_by_days(x, self.pay_shift[1], self.ccy, self.ccy))
          
     def get_dates(self):
         return self.dates
@@ -367,6 +379,11 @@ class Schedule(object):
     
     def get_end_dates(self):
         return self.end_dates
+    
+    def get_dates_table(self):
+        return self.dates_table
+    
+    
 
         
         
