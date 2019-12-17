@@ -268,6 +268,43 @@ def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None):
 #mdbm_modified_following(datetime.date(2019, 12, 6), 1, 'usd', 'usd')
 #mdbm_modified_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
 #mdbm_modified_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')
+    
+def days_between(d1, d2):
+    '''
+    d1: date
+    d2: date
+    return: integer, number of days between dates d1 and d2
+    '''
+    return (d2 - d1) / datetime.timedelta(days=1)
+
+def is_leap(d):
+    '''
+    date
+    return: True if year of the date 'd' is leap, False otherwise
+    '''
+    try:
+        datetime.date(d.year, 2, 29)
+    except:
+        return False
+    return True
+
+def dcf_act365(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in ACT365 convention
+    '''
+    return days_between(d1, d2)/365
+
+def dcf_actact(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in ACT/ACT ISDA convention
+    '''
+    base1=366 if is_leap(d1) else 365
+    base2=366 if is_leap(d2) else 365
+    eoy = datetime.date(d1.year, 12, 31)
+    return (((days_between(d1, eoy) + 1) / base1) + ((days_between(eoy, d2) - 1) / base2))
+    
 
 def calc_period(calc_date, ccy='', period='', hol=None):
     '''calc_date: date, calculation date
@@ -308,7 +345,7 @@ def calc_period(calc_date, ccy='', period='', hol=None):
 class Schedule(object):
     CONVENTIONS = {'calendar', 'following', 'preceding', 'eom', 'eom_following', 
                        'modified_following'}
-    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None, pay_shift=None):
+    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None, pay_shift=None, dcf='act365'):
         '''
         start: date
         end: date
@@ -319,6 +356,7 @@ class Schedule(object):
         pay_shift: tuple (integer, string), integer specifies number of days the payment date needs to be shifted +/- from start or end date
                           string: 'start_date' or 'end_date' represents the date from which payment date shall be deduced
                           if pay_shift=None then payment date equals end date
+        dcf: string, day count factor
         self.dates_table: is DataFrame that consist of interest periods meaning, start dates, end dates, fixing dates and payment dates                
         '''
         self.start = start
@@ -328,6 +366,7 @@ class Schedule(object):
         self.stub = stub
         self.pay_shift = pay_shift
         self.convention = convention
+        self.dcf = dcf
         if self.convention not in self.CONVENTIONS:
             raise ValueError ('\"{0}\" is not valid convention, available conventions are: {1}'.format(self.convention, self.CONVENTIONS))
     
@@ -370,7 +409,18 @@ class Schedule(object):
             self.dates_table['payment_date'] = self.dates_table['end_date']
         else:
             self.dates_table['payment_date'] = self.dates_table[self.pay_shift[0]].apply(lambda x: move_date_by_days(x, self.pay_shift[1], self.ccy, self.ccy))
-         
+
+        #self.dates_table['start_date'] = (self.dates_table['start_date']).astype('datetime64[ns]')
+        #self.dates_table['end_date']= (self.dates_table['end_date']).astype('datetime64[ns]')
+                
+        if self.dcf == 'act365':
+            self.dates_table['dcf'] = dcf_act365(self.dates_table['start_date'], self.dates_table['end_date'])
+# =============================================================================
+#         elif self.dcf == 'actact':
+#             self.dates_table['end_date']= (self.dates_table['end_date']).astype('datetime64[ns]')
+#             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_actact(self.dates_table['start_date'][x],  self.dates_table['end_date'][x]))
+# =============================================================================
+
     def get_dates(self):
         return self.dates
     
@@ -385,7 +435,9 @@ class Schedule(object):
     
     
 
-        
+
+      
+
         
     
      
