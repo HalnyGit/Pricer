@@ -415,11 +415,8 @@ class Schedule(object):
                 
         if self.dcf == 'act365':
             self.dates_table['dcf'] = dcf_act365(self.dates_table['start_date'], self.dates_table['end_date'])
-# =============================================================================
-#         elif self.dcf == 'actact':
-#             self.dates_table['end_date']= (self.dates_table['end_date']).astype('datetime64[ns]')
-#             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_actact(self.dates_table['start_date'][x],  self.dates_table['end_date'][x]))
-# =============================================================================
+        elif self.dcf == 'actact':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_actact(x['start_date'],  x['end_date']), axis=1)
 
     def get_dates(self):
         return self.dates
