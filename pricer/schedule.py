@@ -304,6 +304,17 @@ def dcf_actact(d1, d2):
     base2=366 if is_leap(d2) else 365
     eoy = datetime.date(d1.year, 12, 31)
     return (((days_between(d1, eoy) + 1) / base1) + ((days_between(eoy, d2) - 1) / base2))
+
+def dcf_act360(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in ACT360 convention
+    '''
+    return days_between(d1, d2)/360  
+
+
+
+
     
 
 def calc_period(calc_date, ccy='', period='', hol=None):
@@ -417,6 +428,7 @@ class Schedule(object):
             self.dates_table['dcf'] = dcf_act365(self.dates_table['start_date'], self.dates_table['end_date'])
         elif self.dcf == 'actact':
             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_actact(x['start_date'],  x['end_date']), axis=1)
+            
 
     def get_dates(self):
         return self.dates
