@@ -310,12 +310,67 @@ def dcf_act360(d1, d2):
     d1: date, d2: date
     return: day count fraction in ACT360 convention
     '''
-    return days_between(d1, d2)/360  
+    return days_between(d1, d2)/360
 
+def dcf_30360(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in 30/360 convention
+    '''
+    day1 = d1.day
+    day2 = d2.day
+    month1 = d1.month
+    month2 = d2.month
+    year1 = d1.year
+    year2 = d2.year
+    return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360
 
+def dcf_30U360(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in 30/360 Bond Basis convention
+    '''
+    day1 = d1.day
+    day2 = d2.day
+    month1 = d1.month
+    month2 = d2.month
+    year1 = d1.year
+    year2 = d2.year
+    if (day2==31 and (day1==30 or day1==31)): day2=30
+    if day1==31: day1=30
+    return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360
 
+def dcf_30E360(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in 30/360 Eurobond Basis convention
+            also known as Special German or 30/360 ICMA
+    '''
+    day1 = d1.day
+    day2 = d2.day
+    month1 = d1.month
+    month2 = d2.month
+    year1 = d1.year
+    year2 = d2.year
+    if day1==31: day1=30
+    if day2==31: day2=30
+    return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360    
 
-    
+def dcf_30E360_isda(d1, d2):
+    '''
+    d1: date, d2: date
+    return: day count fraction in 30E/360 ISDA convention
+    '''
+    day1 = d1.day
+    day2 = d2.day
+    month1 = d1.month
+    month2 = d2.month
+    year1 = d1.year
+    year2 = d2.year    
+    if is_eom(d1): day1=30
+    if is_eom(d2): day2=30
+    return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360
+   
 
 def calc_period(calc_date, ccy='', period='', hol=None):
     '''calc_date: date, calculation date
@@ -416,19 +471,37 @@ class Schedule(object):
                      'end_date':self.end_dates}
         self.dates_table = pd.DataFrame(temp_data)
         self.dates_table['fixing_date'] = self.dates_table['start_date'].apply(lambda x: move_date_by_days(x, -days_to_spot, self.ccy, self.ccy))
+    
         if self.pay_shift == None:
             self.dates_table['payment_date'] = self.dates_table['end_date']
         else:
             self.dates_table['payment_date'] = self.dates_table[self.pay_shift[0]].apply(lambda x: move_date_by_days(x, self.pay_shift[1], self.ccy, self.ccy))
 
-        #self.dates_table['start_date'] = (self.dates_table['start_date']).astype('datetime64[ns]')
-        #self.dates_table['end_date']= (self.dates_table['end_date']).astype('datetime64[ns]')
                 
         if self.dcf == 'act365':
             self.dates_table['dcf'] = dcf_act365(self.dates_table['start_date'], self.dates_table['end_date'])
         elif self.dcf == 'actact':
             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_actact(x['start_date'],  x['end_date']), axis=1)
-            
+        elif self.dcf == 'act360':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_act360(x['start_date'],  x['end_date']), axis=1)
+        elif self.dcf == '30360':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30360(x['start_date'],  x['end_date']), axis=1)        
+        elif self.dcf == '30U360':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30U360(x['start_date'],  x['end_date']), axis=1) 
+        elif self.dcf == '30E360':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30E360(x['start_date'],  x['end_date']), axis=1)
+        elif self.dcf == '30E360_isda':
+            self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30E360_isda(x['start_date'],  x['end_date']), axis=1)
+        
+        
+        
+        
+        
+        ###block for testing purpose only
+        self.dates_table['nominal'] = 1000000
+        self.dates_table['rate'] = 0.01
+        self.dates_table['flow'] = round(self.dates_table['nominal'] * self.dates_table['rate'] * self.dates_table['dcf'], 2)
+        ###
 
     def get_dates(self):
         return self.dates
