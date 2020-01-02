@@ -11,6 +11,10 @@ import os
 import glob
 import datetime
 
+import schedule
+
+
+
 
 #getting csv filepaths from directory
 pathfiles = glob.glob('..\\data\\*.csv')
@@ -30,6 +34,9 @@ for i in range(len(curvenames)):
 
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
 
-
-
+d1=datetime.date(2020, 1, 2)
+d2=datetime.date(2021, 1, 2)
+s1 = Schedule(d1, d2, 'pln', 3)
+print(s1.dates_table)
+print(get_eom(d1))
 

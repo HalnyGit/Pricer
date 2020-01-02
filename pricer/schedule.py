@@ -23,10 +23,12 @@ for i in range(len(holiday_paths)):
     hol_df=pd.concat([hol_df, data], axis=1)
 
 holidays = hol_df.to_dict('list')
-#overwrite holidays dict for testing only
+
+###overwrite holidays dict for testing only
 #holidays={'pln':[datetime.date(2020, 2, 3),
 #            datetime.date(2021, 3, 1),
 #            datetime.date(2020, 2, 28) ]}
+###
     
 #non working days dictionary {ccy:[1-Mon, ..., 7-Sun]}
 non_working_days={'pln':[6, 7], 
@@ -36,6 +38,13 @@ non_working_days={'pln':[6, 7],
 
 #number of days to start and end from today for particular currency
 dse={'pln':{'on':(0, 1),
+         'tn':(1, 1),
+         'sn':(2, 1),
+         'w':(2,),
+         'm':(2,),
+         'q':(2,),
+         'y':(2,)},
+      'eur':{'on':(0, 1),
          'tn':(1, 2),
          'sn':(2, 3),
          'w':(2,),
@@ -44,12 +53,15 @@ dse={'pln':{'on':(0, 1),
          'y':(2,)}
 }
 
-#some dates for testing purpose only
+###some dates for testing purpose only
 d = datetime.date(2020, 1, 31)
 h1 = datetime.date(2020, 2, 3)
 h2 = datetime.date(2021, 3, 1)
 h3 = datetime.date(2020, 11, 28)
+###
 
+
+# helper function for checking and getting end of month dates
 def get_eom(init_date):
     '''
     init_date: date
@@ -93,23 +105,34 @@ def is_weom(init_date, nwd_key=None, hol_key=None):
 #test
 #is_weom(datetime.date(2020, 2, 29), nwd_key='pln')
 
-def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None):
+# functions for rolling dates by day and month according to conventions
+def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None, wd_shift=False):
     '''
     moves date by n-number of working days forward or backward
     init_date: date, initial caluclation date
     roll: integer, number of days to move forward (+) or backward (-)
     nwd_key: string that stands for currency iso code, it is a key in non_working_days dictionary
     hol_key: string that stands for currency iso code, it is a key in holidays dictonary
+    wd_shift: True if roll argument refers to working days, False otherwise
     return: date
     '''
     nwd = non_working_days.get(nwd_key, [])
     hol = holidays.get(hol_key,[])
-    moved_date = init_date + datetime.timedelta(days=roll)
+
+    if wd_shift:
+        i=0
+        moved_date=init_date
+        while i<roll:
+            moved_date = moved_date + datetime.timedelta(days=1)
+            if not((moved_date.isoweekday() in nwd) or (moved_date in hol)): i+=1
+    else:
+        moved_date = init_date + datetime.timedelta(days=roll)
+
     if (moved_date.isoweekday() in nwd) or (moved_date in hol):
         if roll >= 0:
             moved_date=move_date_by_days(init_date + datetime.timedelta(days=1), roll=roll, nwd_key=nwd_key, hol_key=hol_key)
         else:
-            moved_date=move_date_by_days(init_date + datetime.timedelta(days=-1), roll=roll, nwd_key=nwd_key, hol_key=hol_key)
+            moved_date=move_date_by_days(init_date + datetime.timedelta(days=-1), roll=roll, nwd_key=nwd_key, hol_key=hol_key)    
     return moved_date
 
 #test        
@@ -268,7 +291,8 @@ def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None):
 #mdbm_modified_following(datetime.date(2019, 12, 6), 1, 'usd', 'usd')
 #mdbm_modified_following(datetime.date(2020, 1, 31), 1, 'pln', 'pln')
 #mdbm_modified_following(datetime.date(2020, 2, 29), 1, 'pln', 'pln')
-    
+
+#day count conventions    
 def days_between(d1, d2):
     '''
     d1: date
@@ -372,46 +396,49 @@ def dcf_30E360_isda(d1, d2):
     return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360
    
 
-def calc_period(calc_date, ccy='', period='', hol=None):
+def calc_period(calc_date, ccy='', period=''):
     '''calc_date: date, calculation date
        ccy: string, (eg. pln, usd)
-       period: string, (possible entries: on, tn, sn, iw, im, iq, iy,
-               where i is integral eg 3w, 2m, 3q, 5y)
+       period: string, (possible entries: on, tn, sn, *w, *m, *q, *y, *x*
+               where * is integral eg 3w, 2m, 3q, 5y, 1x4)
        hol: list of dates that represent holidays 
        returns: tuple of dates that represent start date and end date
-               for given period an currency
+               for given period and currency
     '''
     assert isinstance(calc_date, datetime.date), 'calc_date must be a date'
-     
+
     if (period=='on' or period=='tn' or period=='sn'):
-        start_date=calc_date + datetime.timedelta(days=dse[ccy][period][0])
-        end_date=calc_date + datetime.timedelta(days=dse[ccy][period][1])
-
-    p1=int(period[:-1])
-    p2=period[len(period)-1:]
-    
-    if p2=='w':
-        start_date=calc_date + datetime.timedelta(days=dse[ccy][p2][0])
-        end_date=start_date + datetime.timedelta(weeks=p1)
-    else:
-        start_date=calc_date + datetime.timedelta(days=dse[ccy][p2][0])
-        if p2=='m':
-            mi = (start_date.month + p1) % 12
-            yi = (start_date.month + p1) // 12
-            end_date=(start_date.year + yi, mi, start_date.day)
-        elif p2=='q':
-            mi = (start_date.month + 3 * p1) % 12
-            yi = (start_date.month + 3 * p1) // 12
-            end_date=(start_date.year + yi, mi, start_date.day)
-    
+        start_date=move_date_by_days(calc_date, dse[ccy][period][0], ccy, ccy, True)
+        end_date=move_date_by_days(start_date, dse[ccy][period][1], ccy, ccy, True)
+    if 'x' in period:
+        n = int(period.split('x')[0])
+        m = int(period.split('x')[1])
+        spot_date = move_date_by_days(calc_date, dse[ccy]['sn'][0], ccy, ccy, True)
+        start_date=mdbm_modified_following(spot_date, n, ccy, ccy)
+        end_date=mdbm_modified_following(spot_date, m, ccy, ccy)
+    if any(elem in {'w', 'm', 'q', 'y'} for elem in period):
+        duration=int(period[:-1])
+        interval=period[len(period)-1:]
+        if interval=='w':
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
+            end_date=move_date_by_days(start_date, 7*duration, ccy, ccy)
+        if interval=='m':
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
+            end_date=mdbm_modified_following(start_date, duration, ccy, ccy)
+        if interval=='q':
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
+            end_date=mdbm_modified_following(start_date, 3*duration, ccy, ccy)
+        if interval=='y':
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
+            end_date=mdbm_modified_following(start_date, 12*duration, ccy, ccy)
     return(start_date, end_date)
-
 
 
 class Schedule(object):
     CONVENTIONS = {'calendar', 'following', 'preceding', 'eom', 'eom_following', 
                        'modified_following'}
-    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None, pay_shift=None, dcf='act365'):
+    def __init__(self, start=None, end=None, ccy=None, roll=None, convention='calendar', stub=None, 
+                 pay_shift=None, dcf='act365'):
         '''
         start: date
         end: date
@@ -492,10 +519,7 @@ class Schedule(object):
             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30E360(x['start_date'],  x['end_date']), axis=1)
         elif self.dcf == '30E360_isda':
             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30E360_isda(x['start_date'],  x['end_date']), axis=1)
-        
-        
-        
-        
+
         
         ###block for testing purpose only
         self.dates_table['nominal'] = 1000000
