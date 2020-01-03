@@ -11,7 +11,7 @@ import os
 import glob
 import datetime
 
-import schedule
+from schedule import *
 
 
 
@@ -31,7 +31,10 @@ curves = {}
 for i in range(len(curvenames)):
     var = curvenames[i]
     curves[var]= pd.read_csv(pathfiles[i], sep=';', decimal='.' )
+    
 
+curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 3), 'pln', x)[0])
+curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 3), 'pln', x)[1])
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
 
 d1=datetime.date(2020, 1, 2)
