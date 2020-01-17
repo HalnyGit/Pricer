@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import datetime
 import os
+import itertools
 
 #reading holidays from csv files and making dictionary of holidays{ccy:[dates]}
 holiday_paths = [os.path.join('..\\holidays', file) for file in os.listdir('..\\holidays') if file.endswith('.csv')]
@@ -23,6 +24,13 @@ for i in range(len(holiday_paths)):
     hol_df=pd.concat([hol_df, data], axis=1)
 
 holidays = hol_df.to_dict('list')
+ccy_pairs = [ccy_pair for ccy_pair in itertools.combinations(holidays.keys(), 2)]
+for ccy_pair in ccy_pairs:
+    holidays[ccy_pair]=sorted(list(set(holidays[ccy_pair[0]]+holidays[ccy_pair[1]])))
+    rev_ccy_pair = (ccy_pair[1], ccy_pair[0])
+    holidays[rev_ccy_pair] = holidays[ccy_pair]
+
+    
 
 ###overwrite holidays dict for testing only
 #holidays={'pln':[datetime.date(2020, 2, 3),
