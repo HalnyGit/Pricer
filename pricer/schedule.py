@@ -44,7 +44,7 @@ non_working_days={'pln':[6, 7],
                   'usd':[6, 7]
                   }
 
-#number of days to start and end from today for particular currency
+#number of days from today to the start and the end for particular currency
 dse={'pln':{'on':(0, 1),
          'tn':(1, 1),
          'sn':(2, 1),
@@ -53,8 +53,8 @@ dse={'pln':{'on':(0, 1),
          'q':(2,),
          'y':(2,)},
       'eur':{'on':(0, 1),
-         'tn':(1, 2),
-         'sn':(2, 3),
+         'tn':(1, 1),
+         'sn':(2, 1),
          'w':(2,),
          'm':(2,),
          'q':(2,),
@@ -120,7 +120,7 @@ def move_date_by_days(init_date, roll=1, nwd_key=None, hol_key=None, wd_shift=Fa
     init_date: date, initial caluclation date
     roll: integer, number of days to move forward (+) or backward (-)
     nwd_key: string that stands for currency iso code, it is a key in non_working_days dictionary
-    hol_key: string that stands for currency iso code, it is a key in holidays dictonary
+    hol_key: string or tuple of pair of strings that stand for currency iso code, it is a key in holidays dictonary
     wd_shift: True if roll argument refers to working days, False otherwise
     return: date
     '''
@@ -159,7 +159,7 @@ def mdbm_calendar(init_date, roll=1):
     n_year = (init_date.month + roll)    
     
     if roll >= 0:
-        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+        n_year = 0 if n_year == 12 else ((init_date.month + (roll-1)) // 12)    
     else:
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12) 
     
@@ -188,7 +188,7 @@ def mdbm_following(init_date, roll=1, nwd_key=None, hol_key=None):
     if n_month==0: n_month=12
     n_year = (init_date.month + roll)    
     if roll >= 0:
-        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+        n_year = 0 if n_year == 12 else ((init_date.month + (roll-1)) // 12)    
     else:
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12) 
     
@@ -218,7 +218,7 @@ def mdbm_preceding(init_date, roll=1, nwd_key=None, hol_key=None):
     if n_month==0: n_month=12
     n_year = (init_date.month + roll)    
     if roll >= 0:
-        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+        n_year = 0 if n_year == 12 else ((init_date.month + (roll-1)) // 12)    
     else:
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12)   
     try:
@@ -279,7 +279,7 @@ def mdbm_modified_following(init_date, roll=1, nwd_key=None, hol_key=None):
     if n_month == 0: n_month = 12
     n_year = (init_date.month + roll)    
     if roll >= 0:
-        n_year = 0 if n_year == 12 else ((init_date.month + roll) // 12)    
+        n_year = 0 if n_year == 12 else ((init_date.month + (roll-1)) // 12)    
     else:
         n_year = -1 if n_year == 0 else ((init_date.month + (roll-1)) // 12)   
     try:
@@ -404,7 +404,7 @@ def dcf_30E360_isda(d1, d2):
     return (360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1))/360
    
 
-def calc_period(calc_date, ccy='', period=''):
+def calc_period(calc_date, ccy, nwd_key=None, hol_key=None, period=''):
     '''calc_date: date, calculation date
        ccy: string, (eg. pln, usd)
        period: string, (possible entries: on, tn, sn, *w, *m, *q, *y, *x*
@@ -416,29 +416,29 @@ def calc_period(calc_date, ccy='', period=''):
     assert isinstance(calc_date, datetime.date), 'calc_date must be a date'
 
     if (period=='on' or period=='tn' or period=='sn'):
-        start_date=move_date_by_days(calc_date, dse[ccy][period][0], ccy, ccy, True)
-        end_date=move_date_by_days(start_date, dse[ccy][period][1], ccy, ccy, True)
+        start_date=move_date_by_days(calc_date, dse[ccy][period][0], nwd_key, hol_key, True)
+        end_date=move_date_by_days(start_date, dse[ccy][period][1], nwd_key, hol_key, True)
     if 'x' in period:
         n = int(period.split('x')[0])
         m = int(period.split('x')[1])
-        spot_date = move_date_by_days(calc_date, dse[ccy]['sn'][0], ccy, ccy, True)
-        start_date=mdbm_modified_following(spot_date, n, ccy, ccy)
-        end_date=mdbm_modified_following(spot_date, m, ccy, ccy)
+        spot_date = move_date_by_days(calc_date, dse[ccy]['sn'][0], nwd_key, hol_key, True)
+        start_date=mdbm_modified_following(spot_date, n, nwd_key, hol_key)
+        end_date=mdbm_modified_following(spot_date, m, nwd_key, hol_key)
     if any(elem in {'w', 'm', 'q', 'y'} for elem in period):
         duration=int(period[:-1])
         interval=period[len(period)-1:]
         if interval=='w':
-            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
-            end_date=move_date_by_days(start_date, 7*duration, ccy, ccy)
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], nwd_key, hol_key, True)
+            end_date=move_date_by_days(start_date, 7*duration, nwd_key, hol_key)
         if interval=='m':
-            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
-            end_date=mdbm_modified_following(start_date, duration, ccy, ccy)
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], nwd_key, hol_key, True)
+            end_date=mdbm_modified_following(start_date, duration, nwd_key, hol_key)
         if interval=='q':
-            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
-            end_date=mdbm_modified_following(start_date, 3*duration, ccy, ccy)
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], nwd_key, hol_key, True)
+            end_date=mdbm_modified_following(start_date, 3*duration, nwd_key, hol_key)
         if interval=='y':
-            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], ccy, ccy, True)
-            end_date=mdbm_modified_following(start_date, 12*duration, ccy, ccy)
+            start_date=move_date_by_days(calc_date, dse[ccy][interval][0], nwd_key, hol_key, True)
+            end_date=mdbm_modified_following(start_date, 12*duration, nwd_key, hol_key)
     return(start_date, end_date)
 
 

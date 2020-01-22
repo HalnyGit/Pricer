@@ -15,7 +15,8 @@ from schedule import *
 
 
 
-
+currencies = {'pln', 'eur', 'usd'
+              }
 #getting csv filepaths from directory
 pathfiles = glob.glob('..\\data\\*.csv')
 
@@ -33,9 +34,24 @@ for i in range(len(curvenames)):
     curves[var]= pd.read_csv(pathfiles[i], sep=';', decimal='.' )
     
 
-curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 3), 'pln', x)[0])
-curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 3), 'pln', x)[1])
+curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[0])
+curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[1])
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
+
+for curve_name in curves.keys():
+    ccy1=curve_name.split('_')[0]
+    ccy2=curve_name.split('_')[1]
+    if ccy2 not in currencies:
+        curves[curve_name]['ccy_1']=ccy1
+        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: print(x))
+        #curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), ccy1, ccy1, ccy1, x)[1])
+    else:
+        curves[curve_name]['ccy_1']=ccy1
+        curves[curve_name]['ccy_2']=ccy2
+
+
+
+     
 
 d1=datetime.date(2020, 1, 2)
 d2=datetime.date(2021, 1, 2)
