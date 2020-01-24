@@ -414,7 +414,7 @@ def calc_period(calc_date, ccy, nwd_key=None, hol_key=None, period=''):
                for given period and currency
     '''
     assert isinstance(calc_date, datetime.date), 'calc_date must be a date'
-
+    period = period.lower()
     if (period=='on' or period=='tn' or period=='sn'):
         start_date=move_date_by_days(calc_date, dse[ccy][period][0], nwd_key, hol_key, True)
         end_date=move_date_by_days(start_date, dse[ccy][period][1], nwd_key, hol_key, True)

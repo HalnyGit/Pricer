@@ -13,10 +13,10 @@ import datetime
 
 from schedule import *
 
+INIT_DATE = datetime.date.today()
 
+currencies = {'pln', 'eur', 'usd'}
 
-currencies = {'pln', 'eur', 'usd'
-              }
 #getting csv filepaths from directory
 pathfiles = glob.glob('..\\data\\*.csv')
 
@@ -27,35 +27,37 @@ for filename in pathfiles:
     filenames.append(f)
     curvenames.append(f.split('.')[0])
 
-#reading data from csv files to particular variables
+#reading data from csv files, curve indexing
 curves = {}
 for i in range(len(curvenames)):
     var = curvenames[i]
     curves[var]= pd.read_csv(pathfiles[i], sep=';', decimal='.' )
-    
 
-curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[0])
-curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[1])
+#curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[0])
+#curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[1])
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
 
 for curve_name in curves.keys():
-    ccy1=curve_name.split('_')[0]
-    ccy2=curve_name.split('_')[1]
+    ccy1, ccy2, *rest = curve_name.split('_')
     if ccy2 not in currencies:
         curves[curve_name]['ccy_1']=ccy1
-        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: print(x))
-        #curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), ccy1, ccy1, ccy1, x)[1])
+        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[0])
+        curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[1])
     else:
         curves[curve_name]['ccy_1']=ccy1
         curves[curve_name]['ccy_2']=ccy2
+        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[0])
+        curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[1])
 
 
+#Estimation curves
+        
+#pln_ibor_3m
+#pln_fra_3m_1x4
+#pln_fra_3m_2x5
+      
+        
+#discounting curves
 
-     
 
-d1=datetime.date(2020, 1, 2)
-d2=datetime.date(2021, 1, 2)
-s1 = Schedule(d1, d2, 'pln', 3)
-print(s1.dates_table)
-print(get_eom(d1))
 
