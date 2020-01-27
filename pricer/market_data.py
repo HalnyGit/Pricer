@@ -57,7 +57,47 @@ for curve_name in curves.keys():
 #pln_fra_3m_2x5
       
         
-#discounting curves
+#curves structures 
+c_structures={'pln_lch_disc':(['pln_ois','1w', 'act365'],
+                               ['pln_ois','1m', 'act365'],
+                               ['pln_ois','2m', 'act365'],
+                               ['pln_ois','3m', 'act365'],
+                               ['pln_fra_3m', '3x6', 'act365'],
+                               ['pln_fra_3m', '6x9', 'act365'],
+                               ['pln_fra_3m', '9x12','act365' ],
+                               ['pln_irs_6m','2y', 'actact'],
+                               ['pln_irs_6m','3y', 'actact'],
+                               ['pln_irs_6m','4y', 'actact'],
+                               ['pln_irs_6m','5y', 'actact'],
+                               ['pln_irs_6m','6y', 'actact'],
+                               ['pln_irs_6m','7y', 'actact'],
+                               ['pln_irs_6m','8y', 'actact'],
+                               ['pln_irs_6m','9y', 'actact'],
+                               ['pln_irs_6m','10y', 'actact'],
+                               ['pln_irs_6m','12y', 'actact'],
+                               ['pln_irs_6m','20y', 'actact']
+                               )
+    }
 
+#curve_structure = pd.DataFrame(c_structures['pln_ois_disc'], columns=['label', 'tenor'])
 
+class CurveBuilder(object):
+    
+    def __init__(self, structure):
+        self.structure=structure
+        self.curve = pd.DataFrame(c_structures[self.structure], columns=['curve', 'tenor', 'conv'])
+        self.curve['start_date']=0
+        self.curve['end_date']=0
+        self.curve['market_rate']=0
+        
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
