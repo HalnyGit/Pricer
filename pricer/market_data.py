@@ -28,28 +28,31 @@ for filename in pathfiles:
     curvenames.append(f.split('.')[0])
 
 #reading data from csv files, curve indexing
-curves = {}
+market_rates = {}
 for i in range(len(curvenames)):
     var = curvenames[i]
-    curves[var]= pd.read_csv(pathfiles[i], sep=';', decimal='.' )
+    market_rates[var]= pd.read_csv(pathfiles[i], sep=';', decimal='.' )
 
 #curves['pln_irs_6m']['start_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[0])
 #curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[1])
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
 
-for curve_name in curves.keys():
+for curve_name in market_rates.keys():
     ccy1, ccy2, *rest = curve_name.split('_')
     if ccy2 not in currencies:
-        curves[curve_name]['ccy_1']=ccy1
-        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[0])
-        curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[1])
+        market_rates[curve_name]['ccy_1']=ccy1
+        market_rates[curve_name]['start_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[0])
+        market_rates[curve_name]['end_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, ccy1, x)[1])
     else:
-        curves[curve_name]['ccy_1']=ccy1
-        curves[curve_name]['ccy_2']=ccy2
-        curves[curve_name]['start_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[0])
-        curves[curve_name]['end_date'] = curves[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[1])
+        market_rates[curve_name]['ccy_1']=ccy1
+        market_rates[curve_name]['ccy_2']=ccy2
+        market_rates[curve_name]['start_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[0])
+        market_rates[curve_name]['end_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[1])
 
+df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
 
+label='pln_ois'
+market_rates[label][market_rates[label]['TENOR']=='1w']['start_date'][0]
 #Estimation curves
         
 #pln_ibor_3m
@@ -79,13 +82,13 @@ c_structures={'pln_lch_disc':(['pln_ois','1w', 'act365'],
                                )
     }
 
-#curve_structure = pd.DataFrame(c_structures['pln_ois_disc'], columns=['label', 'tenor'])
+cs = pd.DataFrame(c_structures['pln_lch_disc'], columns=['label', 'tenor', 'base'])
 
 class CurveBuilder(object):
     
     def __init__(self, structure):
         self.structure=structure
-        self.curve = pd.DataFrame(c_structures[self.structure], columns=['curve', 'tenor', 'conv'])
+        self.curve = pd.DataFrame(c_structures[self.structure], columns=['label', 'tenor', 'base'])
         self.curve['start_date']=0
         self.curve['end_date']=0
         self.curve['market_rate']=0
