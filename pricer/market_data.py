@@ -49,10 +49,11 @@ for curve_name in market_rates.keys():
         market_rates[curve_name]['start_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[0])
         market_rates[curve_name]['end_date'] = market_rates[curve_name]['TENOR'].apply(lambda x: calc_period(INIT_DATE, ccy1, ccy1, (ccy1, ccy2), x)[1])
 
-df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
+#df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
 
-label='pln_ois'
-market_rates[label][market_rates[label]['TENOR']=='1w']['start_date'][0]
+#label='pln_ois'
+#market_rates[label][market_rates[label]['TENOR']=='1w']['start_date'][0]
+#market_rates['pln_ois'].loc[market_rates['pln_ois']['TENOR']=='2w', 'MID']
 #Estimation curves
         
 #pln_ibor_3m
