@@ -113,15 +113,21 @@ df3= pd.DataFrame({'tenor':['2y', '3y', '4y'],
                    'end_date':['08022022', '07022023', '07022024']})
 
 
-d = {'ois':df1, 'fra':df2, 'irs':df3}
+rates = {'ois':df1, 'fra':df2, 'irs':df3}
 
 
-df4= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
+dfA= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
                    'tenor':['1w', '1m', '3x6', '9x12', '2y', '3y', '4y']})
 
-#df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
+dfA['rate'] = dfA.apply(lambda x: rates[x['label']][rates[x['label']]['tenor']==x['tenor']]['rate'], axis=1)
 
+dfAux = pd.concat([df1, df2, df3])
+dfA = pd.merge(dfA, dfAux, how = 'left', on = ['tenor']).drop(['end_date'], axis = 1)
 
+#expected outcome
+dfB= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
+                   'tenor':['1w', '1m', '3x6', '9x12', '2y', '3y', '4y'],
+                   'rate':[2.40, 2.51, 2.95, 3.98, 1.80, 1.81, 1.84 ]})
 
 
 
