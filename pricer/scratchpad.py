@@ -97,15 +97,29 @@ import scipy.interpolate
 # plt.legend(loc='upper left')
 # 
 # =============================================================================
+import numpy as np
+import pandas as pd
 
-df1= pd.DataFrame({'Year':[1910, 1911, 1912],
-                   'CA':[2406, 2534, 2668],
-                   'HI':[0.804, 0.821, 0.832]})
+df1= pd.DataFrame({'tenor':['1w', '1m', '3m', '2y'],
+                   'rate':[2.40, 2.51, 2.66, 2.92],
+                   'end_date':['14022020', '09022020', '07052020', '07022022']})
 
-df2= pd.DataFrame({'State':['CA', 'CA', 'CA', 'HI', 'HI'],
-                   'Year':[1910, 1910, 1911, 1911, 1911]})
+df2= pd.DataFrame({'tenor':['3x6', '6x9', '9x12'],
+                   'rate':[2.95, 3.06, 3.98],
+                   'end_date':['07082020', '09112020', '08022021']})
 
-df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
+df3= pd.DataFrame({'tenor':['2y', '3y', '4y'],
+                   'rate':[1.80, 1.81, 1.84],
+                   'end_date':['08022022', '07022023', '07022024']})
+
+
+d = {'ois':df1, 'fra':df2, 'irs':df3}
+
+
+df4= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
+                   'tenor':['1w', '1m', '3x6', '9x12', '2y', '3y', '4y']})
+
+#df2['Population'] = df2.apply(lambda x: df1.loc[x['Year'] == df1['Year'], x['State']].reset_index(drop=True), axis=1)
 
 
 
