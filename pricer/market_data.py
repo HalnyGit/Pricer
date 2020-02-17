@@ -37,7 +37,9 @@ for i in range(len(curvenames)):
 #curves['pln_irs_6m']['end_date'] = curves['pln_irs_6m']['TENOR'].apply(lambda x: calc_period(datetime.date(2020, 1, 22), 'pln', 'pln', 'pln', x)[1])
 #curves['pln_dep']['G'] = curves['PLN_DEP_WI']['Rate'] * curves['PLN_DEP_WI']['F']
 
+
 for curve_name in market_rates.keys():
+    market_rates[curve_name]['instrument'] = curve_name
     ccy1, ccy2, *rest = curve_name.split('_')
     if ccy2 not in currencies:
         market_rates[curve_name]['ccy_1']=ccy1
@@ -83,13 +85,13 @@ c_structures={'pln_lch_disc':(['pln_ois','1w', 'act365'],
                                )
     }
 
-cs = pd.DataFrame(c_structures['pln_lch_disc'], columns=['label', 'tenor', 'base'])
+cs = pd.DataFrame(c_structures['pln_lch_disc'], columns=['instrument', 'tenor', 'base'])
 
 class CurveBuilder(object):
     
     def __init__(self, structure):
         self.structure=structure
-        self.curve = pd.DataFrame(c_structures[self.structure], columns=['label', 'tenor', 'base'])
+        self.curve = pd.DataFrame(c_structures[self.structure], columns=['instrument', 'tenor', 'base'])
         self.curve['start_date']=0
         self.curve['end_date']=0
         self.curve['market_rate']=0

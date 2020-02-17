@@ -104,25 +104,45 @@ df1= pd.DataFrame({'tenor':['1w', '1m', '3m', '2y'],
                    'rate':[2.40, 2.51, 2.66, 2.92],
                    'end_date':['14022020', '09022020', '07052020', '07022022']})
 
-df2= pd.DataFrame({'tenor':['3x6', '6x9', '9x12'],
+df2 = pd.DataFrame({'tenor':['3x6', '6x9', '9x12'],
                    'rate':[2.95, 3.06, 3.98],
                    'end_date':['07082020', '09112020', '08022021']})
 
-df3= pd.DataFrame({'tenor':['2y', '3y', '4y'],
+df3 = pd.DataFrame({'tenor':['2y', '3y', '4y'],
                    'rate':[1.80, 1.81, 1.84],
                    'end_date':['08022022', '07022023', '07022024']})
 
+df4 = pd.DataFrame({'tenor':['2y', '3y', '4y'],
+                   'rate':[1.70, 1.71, 1.74],
+                   'end_date':['08022022', '07022023', '07022024']})
 
-rates = {'ois':df1, 'fra':df2, 'irs':df3}
+
+rates = {'pln_ois':df1, 'pln_fra_3m':df2, 'pln_irs_6m':df3, 'pln_irs_3m':df4}
+
+for frame in rates:
+    rates[frame]['rate_type'] = frame
 
 
-dfA= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
+dfA= pd.DataFrame({'rate_type':['pln_ois', 'pln_ois', 'pln_fra_3m', 'pln_fra_3m', 'pln_ois', 'pln_irs_6m', 'pln_irs_6m'],
                    'tenor':['1w', '1m', '3x6', '9x12', '2y', '3y', '4y']})
 
-dfA['rate'] = dfA.apply(lambda x: rates[x['label']][rates[x['label']]['tenor']==x['tenor']]['rate'], axis=1)
+temp_list = []
+for elem in set(dfA['rate_type']):
+    temp_list.append(rates[elem])
+    
+dfAux = pd.concat(temp_list)
 
-dfAux = pd.concat([df1, df2, df3])
-dfA = pd.merge(dfA, dfAux, how = 'left', on = ['tenor']).drop(['end_date'], axis = 1)
+another_temp_list = []
+for elem in temp_list:
+    another_temp_list.append(dfA.merge(elem, on=['rate_type', 'tenor']))
+    
+dfAux = pd.concat(another_temp_list)
+
+
+#dfA['rate'] = dfA.apply(lambda x: rates[x['label']][rates[x['label']]['tenor']==x['tenor']]['rate'], axis=1)
+
+#dfAux = pd.concat([df1, df2, df3])
+#dfA = pd.merge(dfA, dfAux, how = 'left', on = ['tenor']).drop(['end_date'], axis = 1)
 
 #expected outcome
 dfB= pd.DataFrame({'label':['ois', 'ois', 'fra', 'fra', 'irs', 'irs', 'irs'],
