@@ -64,6 +64,7 @@ for curve_name in market_rates.keys():
       
         
 #curves structures 
+
 c_structures={'pln_lch_disc':(['pln_ois','1w', 'act365'],
                                ['pln_ois','1m', 'act365'],
                                ['pln_ois','2m', 'act365'],
@@ -90,13 +91,11 @@ cs = pd.DataFrame(c_structures['pln_lch_disc'], columns=['instrument', 'tenor', 
 class CurveBuilder(object):
     
     def __init__(self, structure):
-        self.structure=structure
-        self.curve = pd.DataFrame(c_structures[self.structure], columns=['instrument', 'tenor', 'base'])
-        self.curve['start_date']=0
-        self.curve['end_date']=0
-        self.curve['market_rate']=0
-        
-
+        self.structure = structure
+        curve_base_frame = pd.DataFrame(c_structures[self.structure], columns=['instrument', 'tenor', 'base']) 
+        temp_1 = [market_rates[x] for x in set(curve_base_frame['instrument'])]
+        temp_2 = [curve_base_frame.merge(x, left_on=['tenor', 'instrument'], right_on=['TENOR', 'instrument']) for x in temp_1]
+        self.curve = pd.concat(temp_2, ignore_index=True).drop(columns=['TENOR'])
         
         
         
