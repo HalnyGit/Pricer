@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import glob
 import datetime
+import schedule
 
 from schedule import *
 
@@ -86,7 +87,6 @@ c_structures={'pln_lch_disc':(['pln_ois','1w', 'act365'],
                                )
     }
 
-cs = pd.DataFrame(c_structures['pln_lch_disc'], columns=['instrument', 'tenor', 'base'])
 
 class CurveBuilder(object):
     
@@ -95,11 +95,14 @@ class CurveBuilder(object):
         curve_base_frame = pd.DataFrame(c_structures[self.structure], columns=['instrument', 'tenor', 'base']) 
         temp_1 = [market_rates[x] for x in set(curve_base_frame['instrument'])]
         temp_2 = [curve_base_frame.merge(x, left_on=['tenor', 'instrument'], right_on=['TENOR', 'instrument']) for x in temp_1]
-        self.curve = pd.concat(temp_2, ignore_index=True).drop(columns=['TENOR'])
+        self.curve = pd.concat(temp_2, ignore_index=True).drop(columns=['TENOR']).sort_values(by='end_date')
         
         
         
         
+d1 = datetime.date(2020, 2, 21)
+d2 = datetime.date(2020, 3, 23)
+x = getattr(schedule, 'dcf_act365')(d1, d2)        
         
         
         

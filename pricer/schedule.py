@@ -529,11 +529,13 @@ class Schedule(object):
             self.dates_table['dcf'] = self.dates_table.apply(lambda x: dcf_30E360_isda(x['start_date'],  x['end_date']), axis=1)
 
         
-        ###block for testing purpose only
-        self.dates_table['nominal'] = 1000000
-        self.dates_table['rate'] = 0.01
-        self.dates_table['flow'] = round(self.dates_table['nominal'] * self.dates_table['rate'] * self.dates_table['dcf'], 2)
-        ###
+###code for testing purpose only
+# =============================================================================
+#         self.dates_table['nominal'] = 1000000
+#         self.dates_table['rate'] = 0.01
+#         self.dates_table['flow'] = round(self.dates_table['nominal'] * self.dates_table['rate'] * self.dates_table['dcf'], 2)
+# =============================================================================
+###
 
     def get_dates(self):
         return self.dates
@@ -548,6 +550,7 @@ class Schedule(object):
         return self.dates_table
     
     
+
 
 
       
