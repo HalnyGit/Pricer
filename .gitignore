@@ -1,0 +1,34 @@
+# --- Virtual environments ---
+venv/
+.venv/
+
+# --- Project data (not part of version control) ---
+data/
+holidays/
+
+# --- Python caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Packaging / build ---
+build/
+dist/
+*.egg-info/
+
+# --- Visual Studio / IDE ---
+.vs/
+.vscode/
+*.user
+*.pyproj
+*.sln
+
+# --- Test / pytest ---
+htmlcov/
+.cache/
+.coverage
+
+# --- Logs / temporary files ---
+*.log
+*.tmp
+*.DS_Store
