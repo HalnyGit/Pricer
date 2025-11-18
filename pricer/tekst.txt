@@ -1,4 +1,0 @@
-aaa bbb ccc
-bbb cccc dd
-ccc e fff x
-
