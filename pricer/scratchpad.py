@@ -7,7 +7,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import scipy.interpolate
 
-import schedule
+import schedule_builder
 
 # =============================================================================
 # 

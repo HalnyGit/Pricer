@@ -10,9 +10,9 @@ import pandas as pd
 import os
 import glob
 import datetime
-import schedule
+import schedule_builder
 
-from schedule import *
+from schedule_builder import *
 
 INIT_DATE = datetime.date.today()
 
